@@ -1,0 +1,98 @@
+#include <AFMotor.h>
+
+// Create motor objects on ports M1 and M2
+AF_DCMotor motor1(2);
+AF_DCMotor motor2(1);
+
+// Sensor configuration
+#define NUM_SENSORS 7
+const int C = A0;  
+const int R3 = A1;  
+const int L1 = A2;  
+const int R2 = A3;   
+const int L3 = A4;  
+const int L2 = A5;  
+const int R1 = 2;
+
+const int sensorPins[NUM_SENSORS] = {L3, L2, L1, C, R1, R2, R3};
+int sensorValues[NUM_SENSORS];
+
+// PID constants
+float Kp = 0.7;   // Proportional
+float Ki = 0.00075;   // Integral
+float Kd = 3.0;   // Derivative
+
+// PID variables
+int error, lastError = 0;
+int P, I, D, PIDvalue;
+int baseSpeed = 150;
+float speedFactor = 0.27; // Adjust this from 0.0 (stopped) to 1.0 (full speed)
+
+// NEW: Multiplier to reduce speed at turns (when outer sensors are activated)
+float turnSpeedMultiplier = 0.6; // Adjust between 0.0 and 1.0
+
+void setup() {
+    Serial.begin(115200);
+    Serial.begin(9600);
+    
+    // Initialize motors
+    motor1.setSpeed(0);
+    motor1.run(RELEASE);
+    motor2.setSpeed(0);
+    motor2.run(RELEASE);
+    
+    // Initialize sensors
+    for (int i = 0; i < NUM_SENSORS; i++) {
+        pinMode(sensorPins[i], INPUT);
+    }
+}
+
+void loop() {
+    int position = readSensors();
+    error = (NUM_SENSORS - 1) * 500 - position;
+
+    // PID calculations
+    P = error;
+    I += error;
+    D = error - lastError;
+    lastError = error;
+    PIDvalue = (Kp * P) + (Ki * I) + (Kd * D);
+
+    int leftSpeed = (baseSpeed - PIDvalue) * speedFactor;
+    int rightSpeed = (baseSpeed + PIDvalue) * speedFactor;
+    leftSpeed = constrain(leftSpeed, 0, 255);
+    rightSpeed = constrain(rightSpeed, 0, 255);
+    Serial.print(digitalRead(sensorPins[0]));
+    Serial.print(digitalRead(sensorPins[NUM_SENSORS - 1]));
+    Serial.print("\n");
+    // NEW: If either outer sensor is activated, reduce the speed further.
+    if(digitalRead(sensorPins[0]) == 1 || digitalRead(sensorPins[NUM_SENSORS - 1]) == 1) {
+        leftSpeed = leftSpeed * turnSpeedMultiplier;
+        rightSpeed = rightSpeed * turnSpeedMultiplier;
+        
+    }
+
+    if(digitalRead(sensorPins[1]) == 1 || digitalRead(sensorPins[NUM_SENSORS - 2]) == 1) {
+        leftSpeed = leftSpeed * turnSpeedMultiplier/1.3;
+        rightSpeed = rightSpeed * turnSpeedMultiplier/1.3;
+        
+    }
+
+    motor1.setSpeed(leftSpeed);
+    motor2.setSpeed(rightSpeed);
+    motor1.run(FORWARD);
+    motor2.run(FORWARD);
+}
+
+int readSensors() {
+    int weightedSum = 0;
+    int sum = 0;
+    for (int i = 0; i < NUM_SENSORS; i++) {
+        sensorValues[i] = digitalRead(sensorPins[i]);
+        if (sensorValues[i] == 0) {  // Active low sensors
+            weightedSum += i * 1000;
+            sum++;
+        }
+    }
+    return (sum == 0) ? ((NUM_SENSORS - 1) * 500) : (weightedSum / sum);
+}
