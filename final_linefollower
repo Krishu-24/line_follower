@@ -1,0 +1,120 @@
+#include <AFMotor.h>
+
+// Motor connections using Adafruit Motor Shield v1
+AF_DCMotor motor1(1);
+AF_DCMotor motor2(2);
+
+// Sensor configuration
+#define NUM_SENSORS 7
+const int sensorPins[NUM_SENSORS] = {A0, A1, A2, A3, A4, A5, 2};
+int sensorValues[NUM_SENSORS];
+
+// PID constants
+float Kp = 0.5;   // Proportional
+float Ki = 0.0;   // Integral
+float Kd = 5.0;   // Derivative
+
+// PID variables
+int error, lastError = 0;
+int P, I, D, PIDvalue;
+int baseSpeed = 150;
+
+// Calibration thresholds
+int thresholds[NUM_SENSORS];
+
+void setup() {
+    Serial.begin(115200);
+
+    // Initialize motors
+    motor1.setSpeed(0);
+    motor1.run(RELEASE);
+    motor2.setSpeed(0);
+    motor2.run(RELEASE);
+
+    // Initialize sensors
+    for (int i = 0; i < NUM_SENSORS; i++) {
+        pinMode(sensorPins[i], INPUT);
+    }
+
+    // Calibrate sensors
+    calibrateSensors();
+}
+
+void loop() {
+    int position = readSensors();
+    
+    if (position == -1) {
+        // Line lost: Stop or take corrective action
+        motor1.run(RELEASE);
+        motor2.run(RELEASE);
+        return;
+    }
+
+    error = (NUM_SENSORS - 1) * 500 - position;
+
+    // PID calculations
+    P = error;
+    I += error;
+    I = constrain(I, -1000, 1000); // Prevent integral windup
+    D = error - lastError;
+    lastError = error;
+    PIDvalue = (Kp * P) + (Ki * I) + (Kd * D);
+
+    int leftSpeed = baseSpeed - PIDvalue;
+    int rightSpeed = baseSpeed + PIDvalue;
+    leftSpeed = constrain(leftSpeed, 0, 255);
+    rightSpeed = constrain(rightSpeed, 0, 255);
+
+    motor1.setSpeed(leftSpeed);
+    motor2.setSpeed(rightSpeed);
+    motor1.run(FORWARD);
+    motor2.run(FORWARD);
+}
+
+int readSensors() {
+    int weightedSum = 0;
+    int sum = 0;
+    
+    for (int i = 0; i < NUM_SENSORS; i++) {
+        int value;
+        if (i < NUM_SENSORS - 1) {
+            value = analogRead(sensorPins[i]);
+            value = (value > thresholds[i]) ? 1 : 0; // Threshold comparison
+        } else {
+            value = digitalRead(sensorPins[i]);
+        }
+        
+        sensorValues[i] = value;
+
+        if (sensorValues[i] == 0) { // Active low sensors
+            weightedSum += i * 1000;
+            sum++;
+        }
+    }
+    
+    if (sum == 0) return -1; // Line lost
+    
+    return weightedSum / sum;
+}
+
+void calibrateSensors() {
+    Serial.println("Calibrating sensors...");
+    
+    for (int i = 0; i < NUM_SENSORS; i++) {
+        int minVal = 1023;
+        int maxVal = 0;
+
+        for (int j = 0; j < 100; j++) {
+            int value = analogRead(sensorPins[i]);
+            minVal = min(minVal, value);
+            maxVal = max(maxVal, value);
+            delay(10);
+        }
+
+        thresholds[i] = (minVal + maxVal) / 2;
+        Serial.print("Sensor ");
+        Serial.print(i);
+        Serial.print(" threshold: ");
+        Serial.println(thresholds[i]);
+    }
+}
