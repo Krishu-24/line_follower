@@ -1,0 +1,70 @@
+#include <AFMotor.h>
+
+AF_DCMotor motor1(2);
+AF_DCMotor motor2(1);
+
+#define NUM_SENSORS 7
+const int sensorPins[NUM_SENSORS] = {A4, A5, A2, A0, 2, A3, A1}; // L3, L2, L1, C, R1, R2, R3
+int sensorValues[NUM_SENSORS];
+
+// PID and Speed Configuration
+float Kp = 0.9, Ki = 0.005, Kd = 1.0;
+int error, lastError = 0;
+int P, I, D, PIDvalue;
+
+int baseSpeed = 100;         // Normal speed
+int straightSpeed = 200;     // Higher speed for straightaways
+float normalFactor = 0.27;   // Speed reduction factor for turns
+float straightFactor = 0.8;  // Higher factor for straight line
+
+void setup() {
+    Serial.begin(115200);
+    motor1.setSpeed(0);
+    motor2.setSpeed(0);
+    for(int i=0; i<NUM_SENSORS; i++) pinMode(sensorPins[i], INPUT);
+}
+
+void loop() {
+    bool onlyCenter = readSensors();
+    
+    // Speed selection logic
+    int currentBase = onlyCenter ? straightSpeed : baseSpeed;
+    float currentFactor = onlyCenter ? straightFactor : normalFactor;
+
+    // PID calculations
+    error = 3000 - position;
+    P = error;
+    I += error;
+    D = error - lastError;
+    PIDvalue = (Kp*P) + (Ki*I) + (Kd*D);
+    lastError = error;
+
+    // Motor control
+    int left = (currentBase - PIDvalue) * currentFactor;
+    int right = (currentBase + PIDvalue) * currentFactor;
+    
+    motor1.setSpeed(constrain(left, 0, 255));
+    motor2.setSpeed(constrain(right, 0, 255));
+    motor1.run(FORWARD);
+    motor2.run(FORWARD);
+}
+
+bool readSensors() {
+    int sum = 0, position = 0;
+    bool centerActive = false;
+    
+    for(int i=0; i<NUM_SENSORS; i++) {
+        sensorValues[i] = digitalRead(sensorPins[i]);
+        if(sensorValues[i] == 0) {
+            position += i*1000;
+            sum++;
+            if(i == 3) centerActive = true;
+        }
+    }
+    
+    // Check if only center sensor is active
+    bool onlyCenter = (sum == 1) && centerActive;
+    
+    position = sum == 0 ? 3000 : position/sum;
+    return onlyCenter;
+}
