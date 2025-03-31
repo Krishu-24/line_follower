@@ -18,15 +18,15 @@ const int sensorPins[NUM_SENSORS] = {L3, L2, L1, C, R1, R2, R3};
 int sensorValues[NUM_SENSORS];
 
 // PID constants
-float Kp = 1.0;   // Proportional
-float Ki = 0.0;   // Integral
-float Kd = 2.0;   // Derivative
+float Kp = 0.9;   // Proportional
+float Ki = 0.005;   // Integral
+float Kd = 1.0;   // Derivative
 
 // PID variables
 int error, lastError = 0;
 int P, I, D, PIDvalue;
 int baseSpeed = 150;
-float speedFactor = 0.2; // Adjust this from 0.0 (stopped) to 1.0 (full speed)
+float speedFactor = 0.27; // Adjust this from 0.0 (stopped) to 1.0 (full speed)
 
 void setup() {
     Serial.begin(115200);
