@@ -73,8 +73,8 @@ void loop() {
     }
 
     if(digitalRead(sensorPins[1]) == 1 || digitalRead(sensorPins[NUM_SENSORS - 2]) == 1) {
-        leftSpeed = leftSpeed * turnSpeedMultiplier/1.3;
-        rightSpeed = rightSpeed * turnSpeedMultiplier/1.3;
+        leftSpeed = (leftSpeed * turnSpeedMultiplier)/1.3;
+        rightSpeed = (rightSpeed * turnSpeedMultiplier)/1.3;
         
     }
 
