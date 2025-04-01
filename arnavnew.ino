@@ -26,10 +26,10 @@ float Kd = 6.0;
 int error, lastError = 0;
 int P, I, D, PIDvalue;
 int baseSpeed = 150;
-float speedFactor = 0.27;
+float speedFactor = 0.265;
 
 // Speed control multipliers
-float turnSpeedMultiplier = 0.4; // More aggressive speed reduction at turns
+float turnSpeedMultiplier = 0.5; // More aggressive speed reduction at turns
 
 void setup() {
     Serial.begin(115200);
@@ -69,8 +69,8 @@ void loop() {
     }
     
     if (digitalRead(sensorPins[1]) == 0 || digitalRead(sensorPins[NUM_SENSORS - 2]) == 0) {
-        leftSpeed *= (turnSpeedMultiplier / 1.2);
-        rightSpeed *= (turnSpeedMultiplier / 1.2);
+        leftSpeed *= (turnSpeedMultiplier / 1.5);
+        rightSpeed *= (turnSpeedMultiplier / 1.5);
     }
     
     // Apply speed values
