@@ -71,20 +71,22 @@ void loop() {
     Serial.println(rightSpeed);
 
     // **Sharp Turns Handling**  
-    if (digitalRead(sensorPins[0]) == 1 || digitalRead(sensorPins[NUM_SENSORS - 1]) == 1) {
+    // Check if outer sensors (active LOW) are detecting the line
+    if (digitalRead(sensorPins[0]) == 0 || digitalRead(sensorPins[NUM_SENSORS - 1]) == 0) {
         leftSpeed *= turnSpeedMultiplier;
         rightSpeed *= turnSpeedMultiplier;
     }
 
     // **Curves Handling**  
-    if (digitalRead(sensorPins[1]) == 1 || digitalRead(sensorPins[NUM_SENSORS - 2]) == 1) {
+    // Check if next-to-outer sensors are active (detecting the line)
+    if (digitalRead(sensorPins[1]) == 0 || digitalRead(sensorPins[NUM_SENSORS - 2]) == 0) {
         leftSpeed = (leftSpeed * turnSpeedMultiplier) / 1.3;
         rightSpeed = (rightSpeed * turnSpeedMultiplier) / 1.3;
     }
 
     // **Obstacle (small bar) Handling**  
-    if (sensorValues[3] == 1 && sensorValues[2] == 1 && sensorValues[4] == 1) {
-        // If center and adjacent sensors detect a bar, keep moving straight
+    // If the center and adjacent sensors are active, assume a bar and move straight
+    if (sensorValues[3] == 0 && sensorValues[2] == 0 && sensorValues[4] == 0) {
         leftSpeed = baseSpeed * speedFactor;
         rightSpeed = baseSpeed * speedFactor;
     }
@@ -102,7 +104,7 @@ int readSensors() {
     int sum = 0;
     for (int i = 0; i < NUM_SENSORS; i++) {
         sensorValues[i] = digitalRead(sensorPins[i]);
-        if (sensorValues[i] == 0) {  // Active LOW sensors
+        if (sensorValues[i] == 0) {  // Active LOW sensors: 0 means active
             weightedSum += i * 1000;
             sum++;
         }
