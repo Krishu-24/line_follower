@@ -30,7 +30,6 @@ float speedFactor = 0.27;
 
 // Speed control multipliers
 float turnSpeedMultiplier = 0.4; // More aggressive speed reduction at turns
-bool searchingForLine = false;
 
 void setup() {
     Serial.begin(115200);
@@ -48,14 +47,6 @@ void setup() {
 void loop() {
     int position = readSensors();
     error = (NUM_SENSORS - 1) * 500 - position;
-    
-    // If center sensor (C) doesn't detect a line, enter search mode
-    if (digitalRead(C) == 1) {
-        searchForLine();
-        return;
-    }
-    
-    searchingForLine = false; // Reset search mode when line is found
     
     // PID calculations
     P = error;
@@ -110,18 +101,4 @@ int readSensors() {
     }
     
     return weightedSum / sum;
-}
-
-void searchForLine() {
-    if (!searchingForLine) {
-        searchingForLine = true;
-        Serial.println("Lost line! Searching...");
-    }
-    
-    motor1.setSpeed(100);
-    motor2.setSpeed(100);
-    
-    motor1.run(BACKWARD);
-    motor2.run(FORWARD);
-    delay(200);
 }
