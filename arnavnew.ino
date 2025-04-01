@@ -96,7 +96,7 @@ int readSensors() {
     if (sum == 0) {
         motor1.setSpeed(0);
         motor2.setSpeed(0);
-        delay(100);
+        delay(50);
         return (NUM_SENSORS - 1) * 500; // Assume farthest right position to correct
     }
     
