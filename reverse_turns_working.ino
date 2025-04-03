@@ -27,7 +27,7 @@ float Kd = 4.5;     // Derivative
 int error, lastError = 0;
 int P, I, D, PIDvalue;
 int baseSpeed = 150;
-float speedFactor = 0.3;  // General speed scaling
+float speedFactor = 0.29;//0.3  // General speed scaling
 
 // Turn factors (low for inner, high for outer)
 float turnFactorInner = 0.3;
