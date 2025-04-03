@@ -17,6 +17,7 @@ const int R1 = 2;
 const int sensorPins[NUM_SENSORS] = { L3, L2, L1, C, R1, R2, R3 };
 int sensorValues[NUM_SENSORS];
 
+int revspeedvar=2; //divider for reverse speed multiplier  set to 1 if does not work
 // PID constants
 float Kp = 1.0;    // Proportional
 float Ki = 0.0001;  // Integral
@@ -119,7 +120,7 @@ void applyMotorControl(int leftSpeed, int rightSpeed, bool leftBackward, bool ri
   else if (sensorValues[1] == 1) {  // Middle left sensor triggered (L2) -> moderate correction (turn right)
     setMotorSpeeds((rightSpeed * turnFactorMiddle)/revspeedvar, leftSpeed * turnFactorMiddle, false, true);
   } else if (sensorValues[5] == 1) {  // Middle right sensor triggered (R2) -> moderate correction (turn left)
-    setMotorSpeeds(rightSpeed * turnFactorMiddle, (leftSpeed * turnFactorMiddle)/revspeedvar, true, false);                   //added /2 for slower reverse movements
+    setMotorSpeeds(rightSpeed * turnFactorMiddle, (leftSpeed * turnFactorMiddle)/revspeedvar, true, false);                   
   }
   // Handle inner sensors for slight correction - weakest correction
   else if (sensorValues[2] == 1) {  // Inner left sensor triggered (L1)
