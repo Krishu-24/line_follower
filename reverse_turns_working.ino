@@ -17,7 +17,7 @@ const int R1 = 2;
 const int sensorPins[NUM_SENSORS] = { L3, L2, L1, C, R1, R2, R3 };
 int sensorValues[NUM_SENSORS];
 
-int revspeedvar=2; //divider for reverse speed multiplier  set to 1 if does not work
+int revspeedvar=1.2; //divider for reverse speed multiplier  set to 1 if does not work
 // PID constants
 float Kp = 1.0;    // Proportional
 float Ki = 0.0001;  // Integral
@@ -31,8 +31,8 @@ float speedFactor = 0.3;  // General speed scaling
 
 // Turn factors (low for inner, high for outer)
 float turnFactorInner = 0.3;
-float turnFactorMiddle = 0.35//0.4;
-float turnFactorOuter = 0.4;//0.5;
+float turnFactorMiddle = 0.4;//0.4;
+float turnFactorOuter = 0.5;//0.5;
 
 void setup() {
   Serial.begin(115200);
