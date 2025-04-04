@@ -13,8 +13,8 @@ const int R2 = A3;
 const int L3 = A4;
 const int L2 = A5;
 const int R1 = 2;
-float straightspeedmultiplier = 0.895;
-float revfact = 0.83;  // Reverse speed factor for middle and outer sensors only
+float straightspeedmultiplier = 0.85;
+float revfact = 0.7;//0.8  // Reverse speed factor for middle and outer sensors only
 
 const int sensorPins[NUM_SENSORS] = {L3, L2, L1, C, R1, R2, R3};
 int sensorValues[NUM_SENSORS];
@@ -28,12 +28,12 @@ float Kd = 11.5;    // Derivative
 int error, lastError = 0;
 int P, I, D, PIDvalue;
 int baseSpeed = 150;
-float speedFactor = 0.474;  // General speed scaling
+float speedFactor = 0.49; //49 // General speed scaling
 
 // Turn factors (low for inner, high for outer)
-float turnFactorInner = 0.186;
-float turnFactorMiddle = 0.449;
-float turnFactorOuter = 0.518;
+float turnFactorInner = 0.23;
+float turnFactorMiddle = 0.29;//0.449
+float turnFactorOuter = 0.44;//0.518
 
 void setup() {
   Serial.begin(115200);
