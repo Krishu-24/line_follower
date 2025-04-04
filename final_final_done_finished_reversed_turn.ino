@@ -13,30 +13,30 @@ const int R2 = A3;
 const int L3 = A4;
 const int L2 = A5;
 const int R1 = 2;
+float straightspeedmultiplier = 0.895;
+float revfact = 0.83;  // Reverse speed factor for middle and outer sensors only
 
-float revfact= 1.2;
-const int sensorPins[NUM_SENSORS] = { L3, L2, L1, C, R1, R2, R3 };
+const int sensorPins[NUM_SENSORS] = {L3, L2, L1, C, R1, R2, R3};
 int sensorValues[NUM_SENSORS];
 
 // PID constants
-float Kp = 2.8;    // Proportional
+float Kp = 2.9337;  // Proportional
 float Ki = 0.0001;  // Integral
-float Kd = 11.0; //8.0;     // Derivative
+float Kd = 11.5;    // Derivative
 
 // PID variables
 int error, lastError = 0;
 int P, I, D, PIDvalue;
 int baseSpeed = 150;
-float speedFactor = 0.4;//0.3;  // General speed scaling
+float speedFactor = 0.474;  // General speed scaling
 
 // Turn factors (low for inner, high for outer)
-float turnFactorInner = 0.125;//0.1;
-float turnFactorMiddle = 0.29;
-float turnFactorOuter = 0.417;//0.55;
+float turnFactorInner = 0.186;
+float turnFactorMiddle = 0.449;
+float turnFactorOuter = 0.518;
 
 void setup() {
   Serial.begin(115200);
-
   Serial.println("\n-------------------------------------------------------------------------------------------------");
   Serial.println("| LeftSpeed | RightSpeed | L_Inner | R_Inner | L_Middle | R_Middle | L_Outer | R_Outer |");
   Serial.println("-------------------------------------------------------------------------------------------------");
@@ -75,7 +75,7 @@ void loop() {
   // Take absolute speed values
   leftSpeed = constrain(abs(leftSpeed) * speedFactor, 0, 255);
   rightSpeed = constrain(abs(rightSpeed) * speedFactor, 0, 255);
-  I = constrain(I, -500, 500); // Prevent excessive accumulation
+  I = constrain(I, -500, 500);  // Prevent excessive accumulation
 
   if (error == 0) {
     leftSpeed = rightSpeed = baseSpeed * speedFactor;  // Ensure perfect straight-line movement
@@ -86,24 +86,18 @@ void loop() {
   Serial.print("\t | ");
   Serial.print(rightSpeed);
   Serial.print("\t  | ");
-
-  Serial.print(leftSpeed * turnFactorInner);  // Left Inner
+  Serial.print(leftSpeed * turnFactorInner);
   Serial.print("\t  | ");
-  Serial.print(rightSpeed * turnFactorInner);  // Right Inner
-
+  Serial.print(rightSpeed * turnFactorInner);
   Serial.print("\t  | ");
-  Serial.print(leftSpeed * turnFactorMiddle);  // Left Middle
+  Serial.print(leftSpeed * turnFactorMiddle);
   Serial.print("\t  | ");
-  Serial.print(rightSpeed * turnFactorMiddle);  // Right Middle
-
+  Serial.print(rightSpeed * turnFactorMiddle);
   Serial.print("\t  | ");
-  Serial.print(leftSpeed * turnFactorOuter);  // Left Outer
+  Serial.print(leftSpeed * turnFactorOuter);
   Serial.print("\t  | ");
-  Serial.print(rightSpeed * turnFactorOuter);  // Right Outer
-
+  Serial.print(rightSpeed * turnFactorOuter);
   Serial.println("\t |");
-
-  // delay(500);
 
   // Apply movement
   applyMotorControl(leftSpeed, rightSpeed, leftBackward, rightBackward);
@@ -118,23 +112,24 @@ void applyMotorControl(int leftSpeed, int rightSpeed, bool leftBackward, bool ri
 
   // Handle extreme turns using outermost sensors (L3 and R3) - strongest correction
   if (sensorValues[0] == 1) {  // Leftmost sensor triggered (L3) -> extreme correction (turn right)
-    setMotorSpeeds((rightSpeed * turnFactorOuter)/revfact, leftSpeed * turnFactorOuter, false, true);
+    setMotorSpeeds(rightSpeed * turnFactorOuter , leftSpeed * turnFactorOuter* revfact, false, true);
   } else if (sensorValues[6] == 1) {  // Rightmost sensor triggered (R3) -> extreme correction (turn left)
-    setMotorSpeeds(rightSpeed * turnFactorOuter, (leftSpeed * turnFactorOuter)/revfact, true, false);
+    setMotorSpeeds(rightSpeed * turnFactorOuter* revfact, leftSpeed * turnFactorOuter , true, false);
   }
   // Handle middle sensors for 45° turns - moderate correction
   else if (sensorValues[1] == 1) {  // Middle left sensor triggered (L2) -> moderate correction (turn right)
-    setMotorSpeeds((rightSpeed * turnFactorMiddle)/revfact/1.02, leftSpeed * turnFactorMiddle, false, true);
+    setMotorSpeeds(rightSpeed * turnFactorMiddle , leftSpeed * turnFactorMiddle* revfact, false, true);
   } else if (sensorValues[5] == 1) {  // Middle right sensor triggered (R2) -> moderate correction (turn left)
-    setMotorSpeeds(rightSpeed * turnFactorMiddle, (leftSpeed * turnFactorMiddle)/revfact/1.02, true, false);
+    setMotorSpeeds(rightSpeed * turnFactorMiddle* revfact, leftSpeed * turnFactorMiddle , true, false);
   }
-  // Handle inner sensors for slight correction - weakest correction
+  // Handle inner sensors for slight correction - weakest correction (NO revfact applied)
   else if (sensorValues[2] == 1) {  // Inner left sensor triggered (L1)
     setMotorSpeeds(rightSpeed * turnFactorInner, leftSpeed * turnFactorInner, false, true);
   } else if (sensorValues[4] == 1) {  // Inner right sensor triggered (R1)
     setMotorSpeeds(rightSpeed * turnFactorInner, leftSpeed * turnFactorInner, true, false);
-  } else {  // Normal PID-controlled movement
-    setMotorSpeeds(rightSpeed, leftSpeed, rightBackward, leftBackward);
+  } 
+  else {  // Normal PID-controlled movement (NO revfact applied)
+    setMotorSpeeds(rightSpeed * straightspeedmultiplier, leftSpeed * straightspeedmultiplier, rightBackward, leftBackward);
   }
 }
 
